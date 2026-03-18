@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+@theme {
+  --color-neon-purple: #a855f7;
+  --color-neon-cyan: #22d3ee;
+  --color-dark-bg: #0f0f1a;
+  --color-dark-card: #1a1a2e;
+  --color-dark-surface: #16213e;
+  --color-dark-border: #2a2a4a;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-dark-bg);
+  color: #e2e8f0;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.leaflet-container {
+  height: 300px;
+  width: 100%;
+  border-radius: 0.75rem;
+  z-index: 0;
+}

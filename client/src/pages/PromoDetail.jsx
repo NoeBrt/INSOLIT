@@ -1,0 +1,150 @@
+import { useState, useEffect } from 'react'
+import { useParams, Link } from 'react-router-dom'
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import { useAuth } from '../context/AuthContext'
+import 'leaflet/dist/leaflet.css'
+import L from 'leaflet'
+
+// Fix leaflet default icon
+delete L.Icon.Default.prototype._getIconUrl
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+})
+
+export default function PromoDetail() {
+  const { id } = useParams()
+  const { user } = useAuth()
+  const [promo, setPromo] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [codeRevealed, setCodeRevealed] = useState(false)
+  const [claimed, setClaimed] = useState(false)
+
+  useEffect(() => {
+    fetch(`/api/promos/${id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setPromo(data)
+        setLoading(false)
+      })
+  }, [id])
+
+  async function handleClaim() {
+    setCodeRevealed(true)
+    if (user && !claimed) {
+      await fetch('/api/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user.id, promo_id: promo.id }),
+      })
+      setClaimed(true)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-neon-purple border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (!promo) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <p className="text-xl text-gray-400">Promo introuvable</p>
+        <Link to="/dashboard" className="text-neon-purple hover:underline">Retour</Link>
+      </div>
+    )
+  }
+
+  const hasCoords = promo.latitude && promo.longitude
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Link to="/dashboard" className="text-neon-cyan hover:underline text-sm mb-6 inline-block">
+        ← Retour aux bons plans
+      </Link>
+
+      <div className="bg-dark-card border border-dark-border rounded-2xl overflow-hidden">
+        {promo.image_url && (
+          <div className="h-64 overflow-hidden">
+            <img src={promo.image_url} alt={promo.title} className="w-full h-full object-cover" />
+          </div>
+        )}
+
+        <div className="p-6 sm:p-8">
+          <div className="flex flex-wrap items-center gap-3 mb-4">
+            <span className="text-sm font-medium text-neon-cyan bg-neon-cyan/10 px-3 py-1 rounded-full">
+              {promo.category}
+            </span>
+            {promo.is_exclusive && (
+              <span className="text-sm font-bold bg-gradient-to-r from-neon-purple to-neon-cyan text-white px-3 py-1 rounded-full">
+                Exclusif
+              </span>
+            )}
+          </div>
+
+          <h1 className="text-3xl font-bold text-white mb-2">{promo.title}</h1>
+          <p className="text-gray-400 mb-6">{promo.merchants?.name || 'Marchand'}</p>
+
+          {promo.discount_value && (
+            <p className="text-4xl font-bold bg-gradient-to-r from-neon-purple to-neon-cyan bg-clip-text text-transparent mb-6">
+              -{promo.discount_value}%
+            </p>
+          )}
+
+          <p className="text-gray-300 leading-relaxed mb-8">{promo.description}</p>
+
+          {promo.promo_code && (
+            <div className="mb-8">
+              {codeRevealed ? (
+                <div className="bg-dark-surface border-2 border-neon-purple rounded-xl p-6 text-center">
+                  <p className="text-sm text-gray-400 mb-2">Ton code promo</p>
+                  <p className="text-3xl font-mono font-bold text-neon-cyan tracking-widest">
+                    {promo.promo_code}
+                  </p>
+                  {claimed && (
+                    <p className="text-xs text-green-400 mt-2">Offre enregistrée !</p>
+                  )}
+                </div>
+              ) : (
+                <button
+                  onClick={handleClaim}
+                  className="w-full bg-gradient-to-r from-neon-purple to-neon-cyan text-white font-bold py-4 rounded-xl text-lg hover:opacity-90 transition-opacity cursor-pointer"
+                >
+                  Révéler le code promo
+                </button>
+              )}
+            </div>
+          )}
+
+          {promo.valid_until && (
+            <p className="text-sm text-gray-500 mb-6">
+              Valable jusqu'au {new Date(promo.valid_until).toLocaleDateString('fr-FR')}
+            </p>
+          )}
+
+          {hasCoords && (
+            <div className="rounded-xl overflow-hidden border border-dark-border">
+              <MapContainer
+                center={[promo.latitude, promo.longitude]}
+                zoom={15}
+                scrollWheelZoom={false}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <Marker position={[promo.latitude, promo.longitude]}>
+                  <Popup>{promo.merchants?.name || promo.title}</Popup>
+                </Marker>
+              </MapContainer>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
