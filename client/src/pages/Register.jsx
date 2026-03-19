@@ -40,7 +40,7 @@ export default function Register() {
     setLoading(true)
     try {
       await signUp(email, password, fullName, birthDate, phone, city)
-      navigate('/dashboard')
+      navigate('/')
     } catch (err) {
       setError(err.message)
     } finally {

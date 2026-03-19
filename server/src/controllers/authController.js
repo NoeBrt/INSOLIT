@@ -7,6 +7,7 @@ function sanitizeUser(user) {
   return {
     id: user.id,
     email: user.email,
+    avatar_url: user.avatar_url,
     full_name: user.full_name,
     birth_date: user.birth_date,
     phone: user.phone,
@@ -48,12 +49,13 @@ export async function register(req, res) {
     .insert({
       email: normalizedEmail,
       password_hash,
+      avatar_url: null,
       full_name,
       birth_date,
       phone,
       city,
     })
-    .select('id, email, full_name, birth_date, phone, city')
+    .select('id, email, avatar_url, full_name, birth_date, phone, city')
     .single()
 
   if (error) {
@@ -75,7 +77,7 @@ export async function login(req, res) {
 
   const { data: user, error } = await supabase
     .from('users')
-    .select('id, email, password_hash, full_name, birth_date, phone, city')
+    .select('id, email, avatar_url, password_hash, full_name, birth_date, phone, city')
     .eq('email', normalizedEmail)
     .maybeSingle()
 
@@ -99,7 +101,7 @@ export async function login(req, res) {
 export async function me(req, res) {
   const { data: user, error } = await supabase
     .from('users')
-    .select('id, email, full_name, birth_date, phone, city')
+    .select('id, email, avatar_url, full_name, birth_date, phone, city')
     .eq('id', req.user.id)
     .maybeSingle()
 
@@ -109,6 +111,43 @@ export async function me(req, res) {
 
   if (!user) {
     return res.status(404).json({ error: 'Utilisateur introuvable' })
+  }
+
+  res.json({ user: sanitizeUser(user) })
+}
+
+export async function updateMe(req, res) {
+  const { full_name, birth_date, phone, city, avatar_url } = req.body
+
+  if (!full_name || !birth_date || !phone || !city) {
+    return res.status(400).json({ error: 'full_name, birth_date, phone et city sont requis' })
+  }
+
+  if (!isUnder26(birth_date)) {
+    return res.status(403).json({ error: 'Accès réservé aux moins de 26 ans' })
+  }
+
+  if (avatar_url && typeof avatar_url === 'string' && avatar_url.length > 2500000) {
+    return res.status(400).json({ error: 'Image trop volumineuse' })
+  }
+
+  const payload = {
+    full_name,
+    birth_date,
+    phone,
+    city,
+    avatar_url: avatar_url || null,
+  }
+
+  const { data: user, error } = await supabase
+    .from('users')
+    .update(payload)
+    .eq('id', req.user.id)
+    .select('id, email, avatar_url, full_name, birth_date, phone, city')
+    .single()
+
+  if (error) {
+    return res.status(500).json({ error: error.message })
   }
 
   res.json({ user: sanitizeUser(user) })

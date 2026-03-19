@@ -16,7 +16,7 @@ export default function Login() {
     setLoading(true)
     try {
       await signIn(email, password)
-      navigate('/dashboard')
+      navigate('/')
     } catch (err) {
       setError(err.message)
     } finally {

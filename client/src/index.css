@@ -22,3 +22,27 @@ body {
   border-radius: 0.75rem;
   z-index: 0;
 }
+
+.insolit-pin-wrapper {
+  background: transparent;
+  border: none;
+}
+
+.insolit-pin {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border-radius: 17px 17px 17px 0;
+  transform: rotate(-45deg);
+  background: linear-gradient(160deg, #ff58b5, #ff2e9c);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 14px rgba(255, 46, 156, 0.45);
+}
+
+.insolit-pin span {
+  transform: rotate(45deg);
+  font-size: 16px;
+  line-height: 1;
+}

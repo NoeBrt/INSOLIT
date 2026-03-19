@@ -18,8 +18,14 @@ export default function Navbar() {
         <div className="flex items-center gap-4">
           {user ? (
             <>
-              <Link to="/dashboard" className="text-sm text-gray-300 hover:text-neon-cyan transition-colors">
+              <Link to="/" className="text-sm text-gray-300 hover:text-neon-cyan transition-colors">
                 Bons Plans
+              </Link>
+              <Link to="/map" className="text-sm text-gray-300 hover:text-neon-cyan transition-colors">
+                Carte
+              </Link>
+              <Link to="/account" className="text-sm text-gray-300 hover:text-neon-cyan transition-colors">
+                Compte
               </Link>
               <button
                 onClick={signOut}

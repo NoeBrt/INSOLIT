@@ -58,7 +58,7 @@ export default function PromoDetail() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
         <p className="text-xl text-gray-400">Promo introuvable</p>
-        <Link to="/dashboard" className="text-neon-purple hover:underline">Retour</Link>
+        <Link to="/" className="text-neon-purple hover:underline">Retour</Link>
       </div>
     )
   }
@@ -67,7 +67,7 @@ export default function PromoDetail() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <Link to="/dashboard" className="text-neon-cyan hover:underline text-sm mb-6 inline-block">
+      <Link to="/" className="text-neon-cyan hover:underline text-sm mb-6 inline-block">
         ← Retour aux bons plans
       </Link>
 

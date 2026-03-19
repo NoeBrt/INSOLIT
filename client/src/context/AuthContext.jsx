@@ -98,8 +98,32 @@ export function AuthProvider({ children }) {
     setUser(null)
   }
 
+  async function updateProfile(payload) {
+    const token = getToken()
+    if (!token) {
+      throw new Error('Session expirée, reconnecte-toi')
+    }
+
+    const res = await fetch('/api/auth/me', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    })
+
+    const data = await res.json()
+    if (!res.ok) {
+      throw new Error(data.error || 'Impossible de mettre à jour le profil')
+    }
+
+    setUser(data.user)
+    return data.user
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, signUp, signIn, signOut, getToken }}>
+    <AuthContext.Provider value={{ user, loading, signUp, signIn, signOut, getToken, updateProfile }}>
       {children}
     </AuthContext.Provider>
   )
