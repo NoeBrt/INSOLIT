@@ -5,8 +5,10 @@ import { useAuth } from '../context/AuthContext'
 export default function Register() {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
+  const [city, setCity] = useState('')
   const [password, setPassword] = useState('')
-  const [dateOfBirth, setDateOfBirth] = useState('')
+  const [birthDate, setBirthDate] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { signUp } = useAuth()
@@ -25,7 +27,7 @@ export default function Register() {
     e.preventDefault()
     setError('')
 
-    const age = getAge(dateOfBirth)
+    const age = getAge(birthDate)
     if (age >= 26) {
       setError('Désolé, cette application est réservée aux moins de 26 ans.')
       return
@@ -37,7 +39,7 @@ export default function Register() {
 
     setLoading(true)
     try {
-      await signUp(email, password, fullName, dateOfBirth)
+      await signUp(email, password, fullName, birthDate, phone, city)
       navigate('/dashboard')
     } catch (err) {
       setError(err.message)
@@ -84,11 +86,33 @@ export default function Register() {
             />
           </div>
           <div>
+            <label className="block text-sm text-gray-400 mb-1">Téléphone</label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+              className="w-full bg-dark-surface border border-dark-border rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-neon-purple transition-colors"
+              placeholder="06 12 34 56 78"
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-400 mb-1">Ville</label>
+            <input
+              type="text"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              required
+              className="w-full bg-dark-surface border border-dark-border rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-neon-purple transition-colors"
+              placeholder="Paris"
+            />
+          </div>
+          <div>
             <label className="block text-sm text-gray-400 mb-1">Date de naissance</label>
             <input
               type="date"
-              value={dateOfBirth}
-              onChange={(e) => setDateOfBirth(e.target.value)}
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
               required
               className="w-full bg-dark-surface border border-dark-border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-neon-purple transition-colors"
             />

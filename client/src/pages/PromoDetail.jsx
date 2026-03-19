@@ -15,7 +15,7 @@ L.Icon.Default.mergeOptions({
 
 export default function PromoDetail() {
   const { id } = useParams()
-  const { user } = useAuth()
+  const { user, getToken } = useAuth()
   const [promo, setPromo] = useState(null)
   const [loading, setLoading] = useState(true)
   const [codeRevealed, setCodeRevealed] = useState(false)
@@ -33,10 +33,14 @@ export default function PromoDetail() {
   async function handleClaim() {
     setCodeRevealed(true)
     if (user && !claimed) {
+      const token = getToken()
       await fetch('/api/claim', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: user.id, promo_id: promo.id }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ promo_id: promo.id }),
       })
       setClaimed(true)
     }
@@ -59,7 +63,7 @@ export default function PromoDetail() {
     )
   }
 
-  const hasCoords = promo.latitude && promo.longitude
+  const hasCoords = Number.isFinite(promo.latitude) && Number.isFinite(promo.longitude)
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -77,7 +81,7 @@ export default function PromoDetail() {
         <div className="p-6 sm:p-8">
           <div className="flex flex-wrap items-center gap-3 mb-4">
             <span className="text-sm font-medium text-neon-cyan bg-neon-cyan/10 px-3 py-1 rounded-full">
-              {promo.category}
+              {promo.category_icon ? `${promo.category_icon} ` : ''}{promo.category || 'Sans categorie'}
             </span>
             {promo.is_exclusive && (
               <span className="text-sm font-bold bg-gradient-to-r from-neon-purple to-neon-cyan text-white px-3 py-1 rounded-full">
@@ -88,12 +92,6 @@ export default function PromoDetail() {
 
           <h1 className="text-3xl font-bold text-white mb-2">{promo.title}</h1>
           <p className="text-gray-400 mb-6">{promo.merchants?.name || 'Marchand'}</p>
-
-          {promo.discount_value && (
-            <p className="text-4xl font-bold bg-gradient-to-r from-neon-purple to-neon-cyan bg-clip-text text-transparent mb-6">
-              -{promo.discount_value}%
-            </p>
-          )}
 
           <p className="text-gray-300 leading-relaxed mb-8">{promo.description}</p>
 
@@ -120,9 +118,9 @@ export default function PromoDetail() {
             </div>
           )}
 
-          {promo.valid_until && (
+          {promo.end_date && (
             <p className="text-sm text-gray-500 mb-6">
-              Valable jusqu'au {new Date(promo.valid_until).toLocaleDateString('fr-FR')}
+              Valable jusqu'au {new Date(promo.end_date).toLocaleDateString('fr-FR')}
             </p>
           )}
 

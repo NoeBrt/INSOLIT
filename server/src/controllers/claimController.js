@@ -1,10 +1,11 @@
 import { supabase } from '../lib/supabase.js'
 
 export async function claimPromo(req, res) {
-  const { user_id, promo_id } = req.body
+  const user_id = req.user?.id
+  const { promo_id } = req.body
 
   if (!user_id || !promo_id) {
-    return res.status(400).json({ error: 'user_id et promo_id sont requis' })
+    return res.status(400).json({ error: 'Authentification et promo_id sont requis' })
   }
 
   // Check if already claimed

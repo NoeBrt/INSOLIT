@@ -3,32 +3,47 @@
 -- Run this in the Supabase SQL Editor
 -- =============================================
 
--- Profiles table (extends Supabase auth.users)
-CREATE TABLE IF NOT EXISTS profiles (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+-- Clean existing objects to ensure exact compatibility with the target model.
+-- Avoid DROP POLICY here because PostgreSQL errors if the table does not exist.
+
+DROP TABLE IF EXISTS redemptions;
+DROP TABLE IF EXISTS promos;
+DROP TABLE IF EXISTS merchants;
+DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS users;
+
+-- USER (pure app authentication: no Supabase auth dependency)
+CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
   full_name TEXT NOT NULL,
-  date_of_birth DATE NOT NULL,
+  birth_date DATE NOT NULL,
+  phone TEXT NOT NULL,
+  city TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Enable RLS on profiles
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+-- CATEGORY
+CREATE TABLE categories (
+  id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  label TEXT NOT NULL UNIQUE,
+  icon TEXT
+);
 
-CREATE POLICY "Users can read their own profile"
-  ON profiles FOR SELECT
-  USING (auth.uid() = id);
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can insert their own profile"
-  ON profiles FOR INSERT
-  WITH CHECK (auth.uid() = id);
+CREATE POLICY "Categories are publicly readable"
+  ON categories FOR SELECT
+  USING (true);
 
--- Merchants table
-CREATE TABLE IF NOT EXISTS merchants (
+-- MERCHANT
+CREATE TABLE merchants (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
-  logo_url TEXT,
-  address TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  address TEXT NOT NULL,
+  coordinates POINT,
+  category_id INTEGER REFERENCES categories(id) ON DELETE RESTRICT
 );
 
 ALTER TABLE merchants ENABLE ROW LEVEL SECURITY;
@@ -37,22 +52,15 @@ CREATE POLICY "Merchants are publicly readable"
   ON merchants FOR SELECT
   USING (true);
 
--- Promos table
-CREATE TABLE IF NOT EXISTS promos (
+-- PROMO
+CREATE TABLE promos (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT NOT NULL,
   description TEXT,
-  category TEXT NOT NULL,
   promo_code TEXT,
-  discount_value INTEGER,
-  image_url TEXT,
+  end_date DATE,
   is_exclusive BOOLEAN DEFAULT false,
-  is_active BOOLEAN DEFAULT true,
-  valid_until DATE,
-  latitude DOUBLE PRECISION,
-  longitude DOUBLE PRECISION,
-  merchant_id UUID REFERENCES merchants(id) ON DELETE SET NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  merchant_id UUID REFERENCES merchants(id) ON DELETE SET NULL
 );
 
 ALTER TABLE promos ENABLE ROW LEVEL SECURITY;
@@ -61,21 +69,11 @@ CREATE POLICY "Promos are publicly readable"
   ON promos FOR SELECT
   USING (true);
 
--- Redemptions table
-CREATE TABLE IF NOT EXISTS redemptions (
+-- REDEMPTION
+CREATE TABLE redemptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   promo_id UUID REFERENCES promos(id) ON DELETE CASCADE,
   claimed_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(user_id, promo_id)
 );
-
-ALTER TABLE redemptions ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can read their own redemptions"
-  ON redemptions FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert their own redemptions"
-  ON redemptions FOR INSERT
-  WITH CHECK (auth.uid() = user_id);

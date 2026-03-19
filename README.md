@@ -20,17 +20,12 @@ Application de bons plans exclusifs pour les moins de 26 ans. Stack : React (Vit
 
 ### 2. Variables d'environnement
 
-**Client** (`client/.env`) :
-```
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
-```
-
 **Server** (`server/.env`) :
 ```
 PORT=3001
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_KEY=your-service-role-key
+JWT_SECRET=change-me-in-production
 ```
 
 ### 3. Installation & lancement
@@ -49,13 +44,17 @@ Le client tourne sur `http://localhost:5173`, le serveur sur `http://localhost:3
 
 | Méthode | Route | Description |
 |---------|-------|-------------|
+| POST | `/api/auth/register` | Inscription locale (email + mot de passe hashé) |
+| POST | `/api/auth/login` | Connexion locale (retourne JWT) |
+| GET | `/api/auth/me` | Profil utilisateur courant (JWT requis) |
+| GET | `/api/categories` | Liste des catégories |
 | GET | `/api/promos` | Liste des promos (+ filtre `?category=Food`) |
 | GET | `/api/promos/:id` | Détail d'une promo |
-| POST | `/api/claim` | Enregistrer l'utilisation d'une offre |
+| POST | `/api/claim` | Enregistrer l'utilisation d'une offre (JWT requis) |
 
 ## Features
 
-- Auth : inscription/connexion via Supabase Auth (vérification âge < 26 ans)
+- Auth : système local via API Express (bcrypt + JWT), sans vérification d'email
 - Dashboard avec grille de cartes et filtres par catégorie
 - Vue détail avec carte Leaflet et révélation du code promo
 - Design dark mode avec accents néon violet/cyan

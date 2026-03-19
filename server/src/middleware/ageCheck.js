@@ -3,18 +3,18 @@ import { isUnder26 } from '../utils/age.js'
 
 /**
  * Middleware that verifies the user is under 26 years old.
- * Expects user_id in the request body or as a query parameter.
+ * Expects req.user to be populated by requireAuth middleware.
  */
 export async function ageCheck(req, res, next) {
-  const userId = req.body.user_id || req.query.user_id
+  const userId = req.user?.id
 
   if (!userId) {
-    return next()
+    return res.status(401).json({ error: 'Authentification requise' })
   }
 
   const { data: profile, error } = await supabase
-    .from('profiles')
-    .select('date_of_birth')
+    .from('users')
+    .select('birth_date')
     .eq('id', userId)
     .single()
 
@@ -22,7 +22,7 @@ export async function ageCheck(req, res, next) {
     return res.status(404).json({ error: 'Profil introuvable' })
   }
 
-  if (!isUnder26(profile.date_of_birth)) {
+  if (!isUnder26(profile.birth_date)) {
     return res.status(403).json({ error: 'Accès réservé aux moins de 26 ans' })
   }
 

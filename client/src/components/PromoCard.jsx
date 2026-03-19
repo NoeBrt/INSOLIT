@@ -26,7 +26,7 @@ export default function PromoCard({ promo }) {
       </div>
       <div className="p-4">
         <span className="text-xs font-medium text-neon-cyan bg-neon-cyan/10 px-2 py-1 rounded-full">
-          {promo.category}
+          {promo.category_icon ? `${promo.category_icon} ` : ''}{promo.category || 'Sans categorie'}
         </span>
         <h3 className="mt-2 text-lg font-semibold text-white group-hover:text-neon-purple transition-colors">
           {promo.title}
@@ -34,9 +34,9 @@ export default function PromoCard({ promo }) {
         <p className="mt-1 text-sm text-gray-400">
           {promo.merchants?.name || 'Marchand'}
         </p>
-        {promo.discount_value && (
-          <p className="mt-2 text-xl font-bold bg-gradient-to-r from-neon-purple to-neon-cyan bg-clip-text text-transparent">
-            -{promo.discount_value}%
+        {promo.end_date && (
+          <p className="mt-2 text-sm text-gray-500">
+            Jusqu'au {new Date(promo.end_date).toLocaleDateString('fr-FR')}
           </p>
         )}
       </div>

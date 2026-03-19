@@ -4,12 +4,23 @@ import CategoryFilter from '../components/CategoryFilter'
 
 export default function Dashboard() {
   const [promos, setPromos] = useState([])
+  const [categories, setCategories] = useState([])
   const [category, setCategory] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    fetchCategories()
+  }, [])
+
+  useEffect(() => {
     fetchPromos()
   }, [category])
+
+  async function fetchCategories() {
+    const res = await fetch('/api/categories')
+    const data = await res.json()
+    setCategories(Array.isArray(data) ? data : [])
+  }
 
   async function fetchPromos() {
     setLoading(true)
@@ -35,7 +46,7 @@ export default function Dashboard() {
       </div>
 
       <div className="mb-8">
-        <CategoryFilter selected={category} onChange={setCategory} />
+        <CategoryFilter selected={category} onChange={setCategory} categories={categories} />
       </div>
 
       {loading ? (

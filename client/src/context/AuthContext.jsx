@@ -1,79 +1,105 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
 
 const AuthContext = createContext({})
+const TOKEN_KEY = 'insolit_token'
 
 export const useAuth = () => useContext(AuthContext)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
-  const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      if (session?.user) fetchProfile(session.user.id)
-      else setLoading(false)
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-      if (session?.user) fetchProfile(session.user.id)
-      else {
-        setProfile(null)
-        setLoading(false)
-      }
-    })
-
-    return () => subscription.unsubscribe()
+    restoreSession()
   }, [])
 
-  async function fetchProfile(userId) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
-    setProfile(data)
+  function getToken() {
+    return localStorage.getItem(TOKEN_KEY)
+  }
+
+  function setToken(token) {
+    localStorage.setItem(TOKEN_KEY, token)
+  }
+
+  function clearToken() {
+    localStorage.removeItem(TOKEN_KEY)
+  }
+
+  async function restoreSession() {
+    const token = getToken()
+    if (!token) {
+      setLoading(false)
+      return
+    }
+
+    try {
+      const res = await fetch('/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      if (!res.ok) {
+        clearToken()
+        setUser(null)
+      } else {
+        const data = await res.json()
+        setUser(data.user)
+      }
+    } catch {
+      clearToken()
+      setUser(null)
+    }
+
     setLoading(false)
   }
 
-  async function signUp(email, password, fullName, dateOfBirth) {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    })
-    if (error) throw error
-
-    if (data.user) {
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: data.user.id,
+  async function signUp(email, password, fullName, birthDate, phone, city) {
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        password,
         full_name: fullName,
-        date_of_birth: dateOfBirth,
-      })
-      if (profileError) throw profileError
+        birth_date: birthDate,
+        phone,
+        city,
+      }),
+    })
+
+    const data = await res.json()
+    if (!res.ok) {
+      throw new Error(data.error || 'Erreur lors de l\'inscription')
     }
+
+    setToken(data.token)
+    setUser(data.user)
     return data
   }
 
   async function signIn(email, password) {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
     })
-    if (error) throw error
+
+    const data = await res.json()
+    if (!res.ok) {
+      throw new Error(data.error || 'Identifiants invalides')
+    }
+
+    setToken(data.token)
+    setUser(data.user)
     return data
   }
 
   async function signOut() {
-    await supabase.auth.signOut()
+    clearToken()
     setUser(null)
-    setProfile(null)
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signUp, signIn, signOut, getToken }}>
       {children}
     </AuthContext.Provider>
   )

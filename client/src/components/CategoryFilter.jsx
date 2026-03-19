@@ -1,9 +1,9 @@
-const CATEGORIES = ['Tous', 'Food', 'Expérience', 'Mode', 'Tech', 'Beauté', 'Sport', 'Culture']
+export default function CategoryFilter({ selected, onChange, categories }) {
+  const allCategories = ['Tous', ...categories.map((cat) => cat.label)]
 
-export default function CategoryFilter({ selected, onChange }) {
   return (
     <div className="flex flex-wrap gap-2">
-      {CATEGORIES.map((cat) => (
+      {allCategories.map((cat) => (
         <button
           key={cat}
           onClick={() => onChange(cat === 'Tous' ? null : cat)}
