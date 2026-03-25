@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { MapContainer, Marker, TileLayer } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -97,8 +96,8 @@ export default function MapView() {
   }, [allMarkers, activeFilter, query])
 
   return (
-    <div className="h-screen w-full bg-[#0d0e14] text-white flex flex-col overflow-hidden">
-      <header className="px-4 pt-4 pb-3 shrink-0">
+    <div className="h-[calc(100dvh-5rem)] md:h-[calc(100dvh-4rem)] w-full bg-[#0d0e14] text-white flex flex-col overflow-hidden">
+      <header className="px-4 pt-4 pb-3 shrink-0 md:max-w-7xl md:mx-auto md:w-full md:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-3xl font-black tracking-tight text-[#ff2e9c]">insolit</h1>
           <button className="text-2xl text-[#ff2e9c]" aria-label="Favoris">
@@ -154,25 +153,6 @@ export default function MapView() {
           ))}
         </MapContainer>
       </main>
-
-      <nav className="shrink-0 bg-[#0d0f16] border-t border-[#212436] px-2 py-2">
-        <div className="grid grid-cols-3 gap-1 text-center text-xs">
-          <Link to="/" className="flex flex-col items-center py-1 text-gray-400">
-            <span className="text-lg">🎟️</span>
-            <span>Offres</span>
-          </Link>
-
-          <div className="flex flex-col items-center py-1 text-[#ff2e9c]">
-            <span className="text-lg">📍</span>
-            <span>Carte</span>
-          </div>
-
-          <Link to="/account" className="flex flex-col items-center py-1 text-gray-400">
-            <span className="text-lg">👤</span>
-            <span>Compte</span>
-          </Link>
-        </div>
-      </nav>
     </div>
   )
 }

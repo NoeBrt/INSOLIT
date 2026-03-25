@@ -34,18 +34,18 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">
-          <span className="bg-gradient-to-r from-neon-purple to-neon-cyan bg-clip-text text-transparent">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-4xl font-bold mb-2 leading-tight">
+          <span className="bg-linear-to-r from-neon-purple to-neon-cyan bg-clip-text text-transparent">
             Bons Plans
           </span>{' '}
           du moment
         </h1>
-        <p className="text-gray-400">Les meilleurs deals exclusifs pour les moins de 26 ans</p>
+        <p className="text-sm sm:text-base text-gray-400">Les meilleurs deals exclusifs pour les moins de 26 ans</p>
       </div>
 
-      <div className="mb-8">
+      <div className="mb-6 sm:mb-8">
         <CategoryFilter selected={category} onChange={setCategory} categories={categories} />
       </div>
 
