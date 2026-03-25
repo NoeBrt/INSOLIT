@@ -11,7 +11,7 @@ function toDataUrl(file) {
 }
 
 export default function Account() {
-  const { user, updateProfile } = useAuth()
+  const { user, updateProfile, signOut } = useAuth()
   const [fullName, setFullName] = useState('')
   const [birthDate, setBirthDate] = useState('')
   const [phone, setPhone] = useState('')
@@ -158,13 +158,23 @@ export default function Account() {
             />
           </div>
 
-          <button
-            type="submit"
-            disabled={saving}
-            className="w-full sm:w-auto px-6 py-3 rounded-lg text-white font-medium bg-linear-to-r from-neon-purple to-neon-cyan hover:opacity-90 disabled:opacity-60 cursor-pointer"
-          >
-            {saving ? 'Enregistrement...' : 'Sauvegarder'}
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <button
+              type="submit"
+              disabled={saving}
+              className="w-full sm:w-auto px-6 py-3 rounded-lg text-white font-medium bg-linear-to-r from-neon-purple to-neon-cyan hover:opacity-90 disabled:opacity-60 cursor-pointer"
+            >
+              {saving ? 'Enregistrement...' : 'Sauvegarder'}
+            </button>
+
+            <button
+              type="button"
+              onClick={signOut}
+              className="w-full sm:w-auto px-6 py-3 rounded-lg font-medium border border-dark-border bg-dark-surface text-gray-200 hover:border-neon-purple/50 transition-colors cursor-pointer"
+            >
+              Déconnexion
+            </button>
+          </div>
         </form>
       </div>
     </div>

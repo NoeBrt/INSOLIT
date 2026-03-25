@@ -1,11 +1,14 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { MapContainer, Marker, TileLayer } from 'react-leaflet'
+import { Popup } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
 const PARIS_CENTER = [48.8566, 2.3522]
 
 const FILTERS = [
+  { key: 'all', label: '✨ Toutes' },
   { key: 'restaurants', label: '🍔 Restaurants' },
   { key: 'cadeaux', label: '🎁 Cadeaux' },
   { key: 'activites', label: '🎱 Activités' },
@@ -61,6 +64,17 @@ function buildDenseMarkers() {
   return markers
 }
 
+function getFilterType(promo) {
+  const category = (promo.category || '').toLowerCase()
+
+  if (category === 'food') return 'restaurants'
+  if (category === 'mode' || category === 'beaute' || category === 'beauté' || category === 'tech') {
+    return 'cadeaux'
+  }
+
+  return 'activites'
+}
+
 const iconCache = new Map()
 function getPinIcon(emoji) {
   if (iconCache.has(emoji)) {
@@ -80,16 +94,57 @@ function getPinIcon(emoji) {
 
 export default function MapView() {
   const [query, setQuery] = useState('')
-  const [activeFilter, setActiveFilter] = useState('restaurants')
-  const allMarkers = useMemo(() => buildDenseMarkers(), [])
+  const [activeFilter, setActiveFilter] = useState('all')
+  const [promos, setPromos] = useState([])
+
+  useEffect(() => {
+    fetch('/api/promos')
+      .then((res) => res.json())
+      .then((data) => {
+        setPromos(Array.isArray(data) ? data : [])
+      })
+      .catch(() => {
+        setPromos([])
+      })
+  }, [])
+
+  const allMarkers = useMemo(() => {
+    const validPromos = promos.filter(
+      (promo) => Number.isFinite(promo.latitude) && Number.isFinite(promo.longitude)
+    )
+
+    if (validPromos.length > 0) {
+      return validPromos.map((promo) => {
+        const type = getFilterType(promo)
+        return {
+          id: promo.id,
+          promoId: promo.id,
+          lat: promo.latitude,
+          lng: promo.longitude,
+          type,
+          emoji: promo.category_icon || EMOJI_BY_TYPE[type] || '🎉',
+          name: promo.title,
+          merchant: promo.merchants?.name || 'Marchand',
+          category: promo.category || 'Offre',
+        }
+      })
+    }
+
+    return buildDenseMarkers()
+  }, [promos])
 
   const visibleMarkers = useMemo(() => {
     const q = query.trim().toLowerCase()
     return allMarkers.filter((marker) => {
-      const filterMatch =
-        activeFilter === 'activites'
-          ? marker.type === 'activites' || marker.type === 'nightlife'
-          : marker.type === activeFilter
+      let filterMatch = true
+
+      if (activeFilter !== 'all') {
+        filterMatch =
+          activeFilter === 'activites'
+            ? marker.type === 'activites' || marker.type === 'nightlife'
+            : marker.type === activeFilter
+      }
+
       const queryMatch = !q || marker.name.toLowerCase().includes(q)
       return filterMatch && queryMatch
     })
@@ -133,25 +188,46 @@ export default function MapView() {
         </div>
       </header>
 
-      <main className="relative flex-1 min-h-0">
-        <MapContainer
-          center={PARIS_CENTER}
-          zoom={11}
-          scrollWheelZoom
-          style={{ height: '100%', width: '100%' }}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          {visibleMarkers.map((marker) => (
-            <Marker
-              key={marker.id}
-              position={[marker.lat, marker.lng]}
-              icon={getPinIcon(marker.emoji)}
+      <main className="relative flex-1 min-h-0 px-4 pb-4 md:px-6 lg:px-8">
+        <div className="h-full overflow-hidden rounded-2xl border border-[#2a2d3d] shadow-[0_12px_30px_rgba(0,0,0,0.35)]">
+          <MapContainer
+            center={visibleMarkers[0] ? [visibleMarkers[0].lat, visibleMarkers[0].lng] : PARIS_CENTER}
+            zoom={11}
+            scrollWheelZoom
+            style={{ height: '100%', width: '100%' }}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-          ))}
-        </MapContainer>
+            {visibleMarkers.map((marker) => (
+              <Marker
+                key={marker.id}
+                position={[marker.lat, marker.lng]}
+                icon={getPinIcon(marker.emoji)}
+              >
+                <Popup>
+                  <div className="min-w-45">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-lg">{marker.emoji}</span>
+                      <p className="font-semibold text-sm text-[#111827]">{marker.category}</p>
+                    </div>
+                    <p className="font-semibold text-[#111827] mb-1">{marker.name}</p>
+                    <p className="text-xs text-gray-600 mb-3">{marker.merchant}</p>
+                    {marker.promoId && (
+                      <Link
+                        to={`/promo/${marker.promoId}`}
+                        className="inline-flex items-center rounded-md bg-[#ff2e9c] px-3 py-1.5 text-xs font-semibold text-white"
+                      >
+                        Voir la promo
+                      </Link>
+                    )}
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
+        </div>
       </main>
     </div>
   )
